@@ -26,17 +26,24 @@ impl Diagnosticts {
             size: None
         }
     }
+    fn most_common_bits(&self) -> usize {
+        let mut current = 0;
+        for (power, count) in self.data.iter().enumerate() {
+            if count.ones > count.zeros {
+                let cmp = usize::pow(2, power as u32);
+                current = current | cmp;
+            }
+        }
+        return current;
+    }
+
     fn gamma_rate(&self) -> usize {
-        return most_common_bits(self.data);
+        return self.most_common_bits();
     }
 
     fn epsilon_rate(&self) -> usize {
-        // 0000 1010
-        // 0000 0100
-        // 0000 1000
-        // 1111 0111
-        // 0000 1111
-        let common_bits = most_common_bits(self.data);
+        let common_bits = self.most_common_bits();
+        println!("{}",common_bits);
         if self.size.is_none() {
             println!("Something went wrong, diagnostic size is set to None");
             std::process::exit(1);
@@ -48,7 +55,7 @@ impl Diagnosticts {
         }
     }
 
-    fn power_comsumption(self) -> usize {
+    fn power_comsumption(&self) -> usize {
         self.gamma_rate() * self.epsilon_rate()
     }
 
@@ -59,7 +66,7 @@ struct DiagnosticDataPoint {
     size: usize
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 struct BitCount {
     zeros: u32,
     ones: u32,
@@ -88,7 +95,7 @@ fn index_diagnostic_data (mut state: Diagnosticts, next:DiagnosticDataPoint) -> 
         state.size = Some(next.size);
     }
     for power in 0..usize::BITS as usize{
-        let cmp = 2^power;
+        let cmp = usize::pow(2, power as u32);
         let count = &state.data[power];
         if next.value & cmp == cmp {
             state.data[power] = count.add_one()
@@ -97,16 +104,6 @@ fn index_diagnostic_data (mut state: Diagnosticts, next:DiagnosticDataPoint) -> 
         }
     }
     return state;
-}
-
-fn most_common_bits(diagnostic:IndexedDiagnosticData) -> usize {
-    let mut current = 0;
-    for (power, count) in diagnostic.iter().enumerate() {
-        if count.ones > count.zeros {
-            current = current | 2 ^ power;
-        }
-    }
-    return current;
 }
 
 // Returns tuple of size of input and the parsed number.
